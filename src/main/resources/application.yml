@@ -17,3 +17,7 @@ management:
   endpoint:
     health:
       show-details: always
+
+server:
+  error:
+    include-message: always
