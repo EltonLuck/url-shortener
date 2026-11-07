@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import com.elton_luck.url_shortener.entity.Link;
 import com.elton_luck.url_shortener.repository.LinkRepository;
 import com.elton_luck.url_shortener.util.Base62;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,9 +16,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class LinkService {
 
     private final LinkRepository links;
+    private final StringRedisTemplate redis;
 
-    public LinkService(LinkRepository links) {
+    public LinkService(LinkRepository links, StringRedisTemplate redis) {
         this.links = links;
+        this.redis = redis;
     }
 
     @Transactional
@@ -52,6 +55,19 @@ public class LinkService {
                     "url is not a valid URL");
         }
         return url;
+    }
+
+    public String resolve(String shortCode) {
+        String key = "link:" + shortCode;
+        String cached = redis.opsForValue().get(key);
+        if (cached != null) {
+            return cached;                       // cache hit — Postgres never asked
+        }
+        Link link = links.findByShortCode(shortCode)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "link not found"));
+        redis.opsForValue().set(key, link.getOriginalUrl());  // populate on miss
+        return link.getOriginalUrl();
     }
 }
 

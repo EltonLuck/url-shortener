@@ -39,3 +39,16 @@
   (Session 3). No rate limiting yet (Session 4).
 - server.error.include-message: always stays on for local development
   so API errors explain themselves; it comes off before deploy.
+
+## 2026-11-07 — Hot path
+- GET /{code} returns 302 (FOUND) with a Location header; 301
+  deliberately not used, so browsers re-ask the shortener every visit.
+- Cache-aside on the redirect: Redis key link:{code} is checked first;
+  on a miss, Postgres is read via findByShortCode and the result is
+  stored in Redis before returning. Unknown codes return 404, and
+  nothing is cached for them.
+- No TTL on cached links: originalUrl never changes after creation,
+  so a cached value cannot go stale. Revisit if links ever become
+  editable or expirable.
+- RedirectController lives at the root; LinkController keeps
+  /api/links. No route clash, and /actuator/health is unaffected.
