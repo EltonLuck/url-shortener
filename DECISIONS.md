@@ -52,3 +52,25 @@
   editable or expirable.
 - RedirectController lives at the root; LinkController keeps
   /api/links. No route clash, and /actuator/health is unaffected.
+
+## 2026-11-09 — Rate limiting
+- POST /api/links is limited to 10 creates per minute per client IP,
+  enforced with Bucket4j (token bucket, greedy refill) before
+  validation or any database write; over the limit returns 429 with
+  the wait time in the message.
+- The Bucket4j dependency is bucket4j_jdk17-core 8.15.0 — the
+  artifacts were renamed at 8.11 (the bucket4j-core name ends at
+  8.10.1), so the version and the old artifact name together do
+  not exist.
+- Spring Boot 4 renamed server.error.* to spring.web.error.* and
+  silently ignores the old keys; error messages in response bodies
+  are enabled via spring.web.error.include-message — present since
+  Session 2 under the old name, effective only from today, which is
+  also why the Session 2 400s and Session 3 404s never showed
+  their messages.
+- Buckets are in-memory per IP (ConcurrentHashMap), reset on
+  restart, not shared across instances — right for a single-instance
+  MVP; a Redis-backed bucket is the step if the app ever runs
+  multi-instance.
+- GET /{code} is deliberately not rate-limited: the redirect hot
+  path stays fast, and the Session 6 load test hammers it.

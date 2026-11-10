@@ -13,11 +13,12 @@ spring:
       host: localhost
       port: 6379
 
+  web:
+    error:
+      include-message: always
+
 management:
   endpoint:
     health:
       show-details: always
 
-server:
-  error:
-    include-message: always
