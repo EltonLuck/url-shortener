@@ -99,3 +99,11 @@
 - CI: GitHub Actions runs ./mvnw test on every push and pull
   request to main (JDK 21, temurin). Testcontainers works
   unchanged because GitHub-hosted runners ship Docker.
+- UrlShortenerApplicationTests (the Initializr context test) was
+  deleted after CI run #2: it booted against the local compose
+  database, so it passed locally only because compose was up and
+  failed in CI where nothing listens on localhost:5432. It had no
+  assertions, and LinkApiIntegrationTest boots the same context
+  against real containers anyway — its coverage was a strict
+  subset. The suite is now self-contained: ./mvnw test needs only
+  the Docker daemon, no compose stack.
