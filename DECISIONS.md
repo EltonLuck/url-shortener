@@ -74,3 +74,28 @@
   multi-instance.
 - GET /{code} is deliberately not rate-limited: the redirect hot
   path stays fast, and the Session 6 load test hammers it.
+
+## 2026-11-10 — Tests
+- Integration tests run against real Postgres 16 and Redis 7 in
+  Testcontainers, wired with @ServiceConnection; no test touches
+  the local docker compose database.
+- Spring Boot 4.1.2 manages Testcontainers 2.x: artifacts are
+  testcontainers-postgresql / testcontainers-junit-jupiter and the
+  Postgres container lives in org.testcontainers.postgresql — the
+  1.x names do not resolve. No versions pinned in pom.xml; the
+  parent manages them. (Same rename lesson as Bucket4j, Session 4.)
+- Error responses are asserted via the sendError reason
+  (getErrorMessage), not the JSON body: MockMvc never performs the
+  servlet error dispatch that renders the body, so $.message does
+  not exist under MockMvc. Body rendering stays verified by hand
+  in Postman.
+- Rate limiting is tested as a unit test on RateLimitService, not
+  over HTTP: MockMvc requests share one client IP and one
+  in-memory bucket, so an HTTP rate-limit test would interfere
+  with the integration class's own creates.
+- Redis in tests is a GenericContainer with
+  @ServiceConnection(name = "redis"); Boot cannot infer the
+  service from a generic container, so the name is the hint.
+- CI: GitHub Actions runs ./mvnw test on every push and pull
+  request to main (JDK 21, temurin). Testcontainers works
+  unchanged because GitHub-hosted runners ship Docker.
