@@ -107,3 +107,18 @@
   against real containers anyway — its coverage was a strict
   subset. The suite is now self-contained: ./mvnw test needs only
   the Docker daemon, no compose stack.
+
+## 2026-11-11 — Load test
+- Load test: k6, 50 VUs, stages 10 → 50 → 0 over 2 minutes,
+  against GET /{code} on code 2 (warmed Redis hit):
+  2,169,807 requests, ~18,082 req/s, median 1.07 ms,
+  p95 2.12 ms, 0 failed.
+- k6 was run with redirects: 0, so the 302 itself is measured —
+  k6 following the redirect would have measured google.com,
+  not the app.
+- POST /api/links was not load-tested: Bucket4j limits it to
+  10/min per IP, so a load run would only measure the rate
+  limiter.
+- Numbers are local, single instance, same-machine load
+  generator — a local ceiling, not production capacity.
+  Label them that way in the README and resume.
