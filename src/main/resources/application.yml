@@ -1,18 +1,24 @@
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
+
 spring:
   application:
     name: url-shortener
   datasource:
-    url: jdbc:postgresql://localhost:5432/shortener
-    username: shortener
-    password: shortener
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/shortener}
+    username: ${SPRING_DATASOURCE_USERNAME:shortener}
+    password: ${SPRING_DATASOURCE_PASSWORD:shortener}
   jpa:
     hibernate:
       ddl-auto: update
   data:
     redis:
-      host: localhost
-      port: 6379
-
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
   web:
     error:
       include-message: always
@@ -21,4 +27,3 @@ management:
   endpoint:
     health:
       show-details: always
-

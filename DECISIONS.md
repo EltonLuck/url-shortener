@@ -122,3 +122,26 @@
 - Numbers are local, single instance, same-machine load
   generator — a local ceiling, not production capacity.
   Label them that way in the README and resume.
+
+## 2026-11-12 — Containerize + config
+- App is containerized: multi-stage Dockerfile at the repo root
+  (build with the Maven wrapper on eclipse-temurin:21-jdk-alpine,
+  run on eclipse-temurin:21-jre-alpine); docker compose up now
+  runs Postgres 16 + Redis 7 + the app together.
+- All connection settings come from environment variables with
+  the localhost values as committed defaults; IntelliJ runs are
+  unchanged. No credentials in the repo.
+- shortUrl is built from app.base-url (env APP_BASE_URL,
+  default http://localhost:8080), not a hardcoded host.
+- server.forward-headers-strategy: framework, so Bucket4j keys
+  on the real visitor IP behind a platform proxy; verified
+  locally that the 10/min limit still behaves (11th create → 429).
+- Jackson CVE-2026-110879: Spring Boot 4.1.2 still manages the
+  affected Jackson 3.1.7 / 2.21.7, so the fix is the BOM property
+  override to 3.1.8 / 2.21.8 (jackson-bom.version /
+  jackson-2-bom.version), not a parent bump. Still not
+  exploitable in this app (polymorphic/default typing never
+  enabled).
+- Local dev database was wiped by the clean-compose proof
+  (docker compose down -v); the hosted database will likewise
+  start empty in 7b, by design.

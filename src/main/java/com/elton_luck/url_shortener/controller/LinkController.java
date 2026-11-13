@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.beans.factory.annotation.Value;
+
 
 @RestController
 @RequestMapping("/api/links")
@@ -19,10 +21,12 @@ public class LinkController {
 
     private final LinkService links;
     private final RateLimitService rateLimits;
+    private final String baseUrl;
 
-    public LinkController(LinkService links, RateLimitService rateLimits) {
+    public LinkController(LinkService links, RateLimitService rateLimits, @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
         this.links = links;
         this.rateLimits = rateLimits;
+        this.baseUrl = baseUrl;
     }
 
     public record CreateLinkRequest(String url) {}
@@ -42,7 +46,7 @@ public class LinkController {
         Link link = links.create(request.url());
         return new CreateLinkResponse(
                 link.getShortCode(),
-                "http://localhost:8080/" + link.getShortCode(),
+                baseUrl+ "/" + link.getShortCode(),
                 link.getOriginalUrl());
     }
 }
