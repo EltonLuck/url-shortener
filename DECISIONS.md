@@ -145,3 +145,11 @@
 - Local dev database was wiped by the clean-compose proof
   (docker compose down -v); the hosted database will likewise
   start empty in 7b, by design.
+
+## Deploy + custom domain (Nov 13, 2026)
+- Hosted on Railway (app + Postgres + Redis in one project); Dockerfile built from the GitHub repo.
+- `APP_BASE_URL=https://eltn.link` drives every shortUrl the API returns.
+- eltn.link (Porkbun) attached via ALIAS (root) + `_railway-verify` TXT; Railway provisions TLS.
+- `server.forward-headers-strategy: framework` (set in 7a) makes Bucket4j key on the real visitor IP behind Railway's proxy — without it, every visitor would share one rate-limit bucket.
+- First boot failed with `FATAL: database "${{Postgres.PGDATABASE}" does not exist` — Railway passed that reference inside the JDBC URL through as literal text. Fix: use the literal database name (`railway`) in the URL; the host/port references resolved fine.
+- Verified end-to-end from a phone on cellular: create → 201 with https://eltn.link/1, open → 302 to the target.
