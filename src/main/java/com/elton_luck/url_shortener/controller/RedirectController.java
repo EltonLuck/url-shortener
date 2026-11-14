@@ -17,7 +17,7 @@ public class RedirectController {
         this.links = links;
     }
 
-    @GetMapping("/{code}")
+    @GetMapping("/{code:[a-zA-Z0-9]+}")
     public ResponseEntity<Void> redirect(@PathVariable String code) {
         String originalUrl = links.resolve(code);
         return ResponseEntity.status(HttpStatus.FOUND)

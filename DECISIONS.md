@@ -153,3 +153,9 @@
 - `server.forward-headers-strategy: framework` (set in 7a) makes Bucket4j key on the real visitor IP behind Railway's proxy — without it, every visitor would share one rate-limit bucket.
 - First boot failed with `FATAL: database "${{Postgres.PGDATABASE}" does not exist` — Railway passed that reference inside the JDBC URL through as literal text. Fix: use the literal database name (`railway`) in the URL; the host/port references resolved fine.
 - Verified end-to-end from a phone on cellular: create → 201 with https://eltn.link/1, open → 302 to the target.
+
+## Simple frontend (Nov 13, 2026)
+- Post-ship addition: a single static page served by the app itself from `src/main/resources/static/index.html` — no framework, no build step, no new dependencies.
+- Same-origin by construction, so no CORS configuration was needed; the page calls the API with a relative path (`/api/links`), which makes the identical file work on localhost and in production.
+- Scope kept minimal on purpose: create a link, display it, copy it. Validation and rate-limit messages come from the API's own error bodies and are shown verbatim.
+- Adding the page exposed a route clash: `/{code}` also matched `/` itself (empty code), so the redirect controller shadowed the welcome page with its own "link not found" 404. Fixed by constraining the mapping to `/{code:[a-zA-Z0-9]+}` — the route now states what a code actually is (base62, non-empty), and dotted paths like /favicon.ico stay out of the lookup. (The Session 3 "no route clash" note held for /api/links and /actuator; the root page was the untested case.)

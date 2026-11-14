@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eltn.link — URL Shortener</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231d1d1f'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif' font-size='26' font-weight='600' letter-spacing='-0.5' fill='%23ffffff'%3EEL%3C/text%3E%3C/svg%3E">
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+          margin: 0; min-height: 100vh; display: grid; place-items: center;
+          background: #f5f5f7; color: #1d1d1f;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .card {
+          background: #fff; width: calc(100% - 2rem); max-width: 480px;
+          padding: 2.5rem; border-radius: 16px; text-align: center;
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+        h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; }
+        .tagline { color: #6e6e73; margin: 0.5rem 0 0; }
+        form { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+        input {
+          flex: 1; min-width: 0; padding: 0.7rem 0.9rem; font-size: 1rem;
+          border: 1px solid #d2d2d7; border-radius: 10px;
+        }
+        button {
+          padding: 0.7rem 1.1rem; font-size: 1rem; border: none; border-radius: 10px;
+          background: #1d1d1f; color: #fff; cursor: pointer; white-space: nowrap;
+        }
+        button:hover { background: #333336; }
+        button:disabled { opacity: 0.6; cursor: default; }
+        #result { margin-top: 1.25rem; display: flex; gap: 0.5rem; align-items: center; justify-content: center; }
+        #result[hidden] { display: none; }
+        #short-url { font-weight: 600; color: #0066cc; word-break: break-all; }
+        #copy-btn { padding: 0.45rem 0.8rem; font-size: 0.9rem; }
+        #error { color: #b00020; margin: 1rem 0 0; }
+        #error[hidden] { display: none; }
+        footer { margin-top: 2rem; font-size: 0.85rem; color: #6e6e73; }
+    </style>
+</head>
+<body>
+<main class="card">
+    <h1>eltn.link</h1>
+    <p class="tagline">A URL shortener built with Java &amp; Spring Boot.</p>
+
+    <form id="shorten-form">
+        <input id="url-input" type="text" placeholder="Paste a long URL…" autocomplete="off" spellcheck="false">
+        <button id="submit-btn" type="submit">Shorten</button>
+    </form>
+
+    <div id="result" hidden>
+        <a id="short-url" href="#" target="_blank" rel="noopener"></a>
+        <button id="copy-btn" type="button">Copy</button>
+    </div>
+    <p id="error" hidden></p>
+
+    <footer>
+        Java 21 · Spring Boot · PostgreSQL · Redis
+    </footer>
+</main>
+
+<script>
+    const form = document.getElementById('shorten-form');
+    const input = document.getElementById('url-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const result = document.getElementById('result');
+    const shortUrlLink = document.getElementById('short-url');
+    const copyBtn = document.getElementById('copy-btn');
+    const error = document.getElementById('error');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = input.value.trim();
+      result.hidden = true;
+      error.hidden = true;
+      if (!url) {
+        error.textContent = 'Paste a URL first.';
+        error.hidden = false;
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Shortening…';
+      try {
+        const res = await fetch('/api/links', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 201) {
+          shortUrlLink.textContent = data.shortUrl;
+          shortUrlLink.href = data.shortUrl;
+          copyBtn.textContent = 'Copy';
+          result.hidden = false;
+        } else {
+          error.textContent = data.message || ('Something went wrong (status ' + res.status + ').');
+          error.hidden = false;
+        }
+      } catch (err) {
+        error.textContent = 'Could not reach the server — try again.';
+        error.hidden = false;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Shorten';
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(shortUrlLink.textContent);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+      } catch (err) {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+      }
+    });
+</script>
+</body>
+</html>
