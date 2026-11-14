@@ -7,6 +7,7 @@ sessions, and live in production.
 **Live demo:** https://eltn.link
 
 ![System design](docs/URLShortenerDesign.png)
+*Initial system design exploring horizontal scaling. The current production deployment runs a single Spring Boot instance with PostgreSQL and Redis on Railway.*
 
 ## How it works
 
